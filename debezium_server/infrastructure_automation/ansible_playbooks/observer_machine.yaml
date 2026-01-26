@@ -1,0 +1,39 @@
+- name: Configure the observer machine with all the different services
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Install docker
+      import_tasks: tasks/install_docker.yaml
+
+    - name: Copy observer files  
+      import_tasks: tasks/copy_files.yaml
+      vars:
+        source_dir: "../../../observer_machine"
+        destination_dir: "/home/ec2-user/"
+
+    - name: Update observer configuration files
+      import_tasks: tasks/update_observer_files.yaml
+      vars:
+        observed_machine: "{{ observed_instance_address }}"
+        throughput_goal: "{{ desired_throughput }}"
+        workload_name: "{{ workload_to_run }}"
+        tables_names: "{{ tables_to_use }}"
+        num_threads: "{{ thread_count }}"
+        num_registries: "{{ registries_count }}"
+
+    - name: Spin up monitoring containers
+      import_tasks: tasks/run_containers.yaml
+      vars:
+        directory: "/home/ec2-user/observer_machine/monitoring"
+        file: "docker-compose.yaml"
+
+    - name: Wait for 2 minutes, until everything get ups and running properly
+      ansible.builtin.pause:
+        minutes: 2
+
+    - name: Spin up YCSB load generator
+      import_tasks: tasks/run_containers.yaml
+      vars:
+        directory: "/home/ec2-user/observer_machine/scenarios/{{ database_type }}"
+        file: "docker-compose.yaml"

@@ -1,0 +1,15 @@
+services:
+  ycsb:
+    container_name: ycsb
+    image: quay.io/debezium/performance:ycsb_jdbc-1.0.17
+    environment:
+      - DEBUG=false
+      - CONFIG_FILENAME=mysql.properties
+      - TABLE_NAME=<tables_to_use>
+      - WORKLOAD_FILENAME=<workload_to_run>
+      - MAX_THROUGHPUT=<desired_throughput>
+    volumes:
+      - ./ycsb_config/conf:/ycsb/conf
+      - ./ycsb_config/results:/ycsb/results
+      - ../workloads:/ycsb/workloads
+
